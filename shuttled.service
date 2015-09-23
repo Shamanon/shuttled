@@ -1,0 +1,11 @@
+# system service to run shuttled daemon
+
+[Unit]
+Description=Contour Shuttle Interface
+After=remote-fs.target
+After=syslog.target
+StopWhenUnneeded=true
+
+[Service]
+ExecStart=/usr/local/bin/shuttled
+ExecStop=/usr/sbin/pkill shuttled

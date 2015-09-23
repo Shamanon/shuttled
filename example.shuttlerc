@@ -1,0 +1,42 @@
+
+# Copyleft 2015 Joshua Besneatte (http://pirates.jairaja.org
+
+# Default keybindings for shuttled 
+
+# The keys on the Contour Shuttle Pro v2 are arranged like this:
+#
+#           1  2  3  4
+#          5  6  7  8  9
+#
+#        14     Jog    15
+#
+#          10        11
+#         12          13
+
+# The keys on the Contour Shuttle Pro v2 / SpaceShuttle are arranged like this:
+#
+#            6  7  8
+#
+#           5  Jog   9
+# 
+
+# Jog Left is 16 and Jog Right is 17
+
+	1
+	2
+	3
+	4
+	5	KEY_HOME
+	6	KEY_PGUP
+	7	KEY_SPACE
+	8	KEY_RIGHT
+	9	KEY_PGDN
+	10
+	11
+	12
+	13
+	14
+	15
+	16	KEY_LEFT
+	17	KEY_RIGHT
+

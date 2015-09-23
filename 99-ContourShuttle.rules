@@ -1,0 +1,7 @@
+# Identify Contour device and start shuttled
+
+# install this file in /etc/udev/rules.d
+
+# Symlink Shuttle device to /dev/shuttle -- All have the same device it
+SUBSYSTEM=="input", ENV{ID_VENDOR_ID}=="0b33", ENV{ID_MODEL_ID}=="0020", SYMLINK+="shuttle"
+ENV{ID_VENDOR_ID}=="0b33", ENV{ID_MODEL_ID}=="0020", TAG+="systemd", ENV{SYSTEMD_WANTS}="shuttled.service"
