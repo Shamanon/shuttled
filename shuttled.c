@@ -22,42 +22,28 @@ typedef struct input_event EV;
 int debug_strokes = 1;
 
 unsigned short jogvalue = 0xffff;
-int shuttlevalue = 0xffff;
-struct timeval last_shuttle;
-int need_synthetic_shuttle;
-int wstat;
 
 int nread;
-char *dev_name;
+int wstat;
+char *dev_name = "/dev/shuttle";
+char *conf_file = "/etc/shuttled";
 int fd;
 EV ev;
 
 /* key bindings, needs to be moved to config file */
-int mykey[7] = { KEY_HOME, KEY_LEFT, KEY_SPACE, KEY_RIGHT, KEY_END, KEY_LEFT, KEY_RIGHT };
+int mykey[17];
 
 /* Globals */
 static int uinp_fd = -1;
 struct uinput_user_dev uinp; // uInput device structure
 struct input_event event; // Input device structure
-/* Setup the uinput device */
 
-void handler(int num) 
-{
-  // we might use this handler for many signals
-  switch (num)
-  {
-    case SIGTERM:
-      // clean up code.
-      printf("Goodbye\n");
-      exit(0);
-      break;
-  }
-}
-
+/* set up the uinput device */
 int setup_uinput_device()
 {
-	// Temporary variable
+	// Temporary variables
 	int i=0;
+	
 	// Open the input device
 	uinp_fd = open("/dev/uinput", O_WRONLY | O_NDELAY);
 	if (uinp_fd == 0)
@@ -90,12 +76,60 @@ int setup_uinput_device()
 	return 1;
 }
 
+/* Exit handler, gets called on pkill shuttled */
+void handler(int num) 
+{
+  // we might use this handler for many signals
+  switch (num)
+  {
+    case SIGTERM:
+      // clean up code.
+      printf("Goodbye\n");
+      exit(0);
+      break;
+  }
+}
+
+/* read config file */
+void
+read_conf_file()
+{
+	printf("Reading config file...\n");
+  // read config file and put into mykey array
+    config_t cfg, *cf;
+    const config_setting_t *keys;
+    //const char *keys;
+    int count, n;
+
+    cf = &cfg;
+    config_init(cf);
+
+    if (!config_read_file(cf, conf_file)) {
+        fprintf(stderr, "%s:%d - %s\n",
+            config_error_file(cf),
+            config_error_line(cf),
+            config_error_text(cf));
+        config_destroy(cf);
+        exit(0);
+    }
+
+    keys = config_lookup(cf, "default.keys");
+    count = config_setting_length(keys);
+	printf("I have %d keys:\n", count);
+    for (n = 0; n < count; n++) {
+        mykey[n] = config_setting_get_int_elem(keys, n);
+        if(debug_strokes) printf("%d | %d\n",config_setting_get_int_elem(keys, n), n);
+    }
+
+    config_destroy(cf);
+}
+
+/* shutttle device event handling */
 void
 send_key(unsigned int key, int press)
 {
-	if (debug_strokes) {
-		printf("Got Stroke: %d\n", key);
-	}
+	
+	if (debug_strokes) printf("Got Stroke: %d\n", key);
 	
 	if (press)
 	{
@@ -130,23 +164,20 @@ send_key(unsigned int key, int press)
 void
 key(unsigned short code, unsigned int value)
 {
-  code -= EVENT_CODE_KEY1;
-
   if (code <= NUM_KEYS) {
-    send_key(mykey[code-4],value);
+    send_key(mykey[code-1],value);
   } else {
-    fprintf(stderr, "key(%d, %d) out of range\n", code + EVENT_CODE_KEY1, value);
+    printf("key(%d, %d) out of range\n", code, value);
   }
 }
-
 
 void
 shuttle(int value, int code)
 {
 	if (value < -7 || value > 7) {
-		fprintf(stderr, "shuttle(%d) out of range\n", value);
+		printf("shuttle(%d) out of range\n", value);
 	} else {
-		fprintf(stderr, "shuttle sees = (%d, %d)\n", value, code);
+		printf("shuttle sees = (%d, %d)\n", value, code);
 	}
 }
 
@@ -159,9 +190,9 @@ jog(int value, int code)
   if (jogvalue != value) {
     value = value & 0xff;
     direction = ((value - jogvalue) & 0x80) ? -1 : 1;
-	thekey = (direction > 0) ? mykey[6] : mykey[5];
-	send_key(thekey,1);
-	send_key(thekey,0);	
+	thekey = (direction > 0) ? 17 : 16;
+	key(thekey,1);
+	key(thekey,0);	
 	jogvalue = value;
   }
 }
@@ -177,7 +208,7 @@ jogshuttle(unsigned short code, unsigned int value)
     shuttle(value, code);
     break;
   default:
-    fprintf(stderr, "jogshuttle(%d, %d) invalid code\n", code, value);
+    printf("jogshuttle(%d, %d) invalid code\n", code, value);
     break;
   }
 }
@@ -187,40 +218,41 @@ handle_event(EV ev)
 {
 	// FUTURE - Add check for custom translation request here?
 
-	if (debug_strokes) fprintf(stderr, "handle_event = (%d, %d, 0x%x)\n", ev.type, ev.code, ev.value);
+	if (debug_strokes) printf("handle_event = (%d, %d, 0x%x)\n", ev.type, ev.code, ev.value);
 
 	switch (ev.type) {
 		case EVENT_TYPE_DONE:
 		case EVENT_TYPE_ACTIVE_KEY:
 			break;
 		case EVENT_TYPE_KEY:
-			key(ev.code, ev.value);
+			key(ev.code - EVENT_CODE_KEY1, ev.value);
 			break;
 		case EVENT_TYPE_JOGSHUTTLE:
 			jogshuttle(ev.code, ev.value);
 			break;
 		default:
-			fprintf(stderr, "handle_event() invalid type code\n");
+			printf("handle_event() invalid type code\n");
 		break;
 	}
 }
 
+/* MAIN LOOP */
 int
 main(int argc, char **argv)
 {
 
 	int first_time = 1;
 
-	if (argc != 2) {
-		dev_name = "/dev/shuttle";
-	} else {
-		dev_name = argv[1];
-	}
+	// read config file
+	read_conf_file();
+	
+	// use device passed from command line, or default device if none
+	if (argc == 2) dev_name = argv[1];
   
-	// Return an error if device not found.
+	// Return an error if uinput device not found.
 	if (setup_uinput_device() < 0)
 	{
-		fprintf(stderr, "Unable to find uinput device\n");
+		printf("Unable to find uinput device\n");
 		exit(1);
 	}
 	
@@ -248,7 +280,7 @@ main(int argc, char **argv)
 							perror("read event");
 							break;
 						} else {
-							fprintf(stderr, "short read: %d\n", nread);
+							printf("short read: %d\n", nread);
 							break;
 						}
 					}

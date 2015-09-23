@@ -17,13 +17,13 @@ install: all
 	install shuttled ${INSTALL_DIR}
 	cp *.rules ${RULES_DIR}
 	cp shuttled.service ${SERVICE_DIR}
-	cp example.shuttlerc ${CONFIG_DIR}/shuttled
+	cp shuttled.conf ${CONFIG_DIR}/shuttled
 	systemctl daemon-reload
 	udevadm control --reload
 	udevadm trigger
 
 shuttled: ${OBJ}
-	gcc ${CFLAGS} ${OBJ} -o shuttled
+	gcc ${CFLAGS} ${OBJ} -o shuttled -lpthread -lconfig
 
 clean:
 	rm -f shuttled $(OBJ)

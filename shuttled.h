@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <pthread.h>
+#include <libconfig.h>
 
 #include <linux/input.h>
 #include <linux/uinput.h>
@@ -31,7 +33,7 @@
 #define EVENT_TYPE_ACTIVE_KEY 4
 
 // ev.code when ev.type == KEY
-#define EVENT_CODE_KEY1 256
+#define EVENT_CODE_KEY1 255
 // KEY2 257, etc...
 
 // ev.value when ev.type == KEY
@@ -52,7 +54,7 @@
 #define PRESS_RELEASE 3
 #define HOLD 4
 
-#define NUM_KEYS 15
+#define NUM_KEYS 17
 #define NUM_SHUTTLES 15
 #define NUM_JOGS 2
 
