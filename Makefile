@@ -6,6 +6,7 @@ CFLAGS=-O3 -W -Wall
 INSTALL_DIR=/usr/local/bin
 RULES_DIR=/etc/udev/rules.d
 SERVICE_DIR=/lib/systemd/system
+CONFIG_DIR=/etc
 
 OBJ=\
 	shuttled.o
@@ -16,6 +17,7 @@ install: all
 	install shuttled ${INSTALL_DIR}
 	cp *.rules ${RULES_DIR}
 	cp shuttled.service ${SERVICE_DIR}
+	cp example.shuttlerc ${CONFIG_DIR}/shuttled
 	systemctl daemon-reload
 	udevadm control --reload
 	udevadm trigger
