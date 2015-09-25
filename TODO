@@ -1,11 +1,7 @@
-
-Translate shuttle events and send to uinput as keystrokes.
+Finish pthread for shuttle wheel key repetition.
 
 Indicator applet to be run in userspace to allow per user configurations
 and per window configs. See original ShuttlePRO app.
-
-Might want to allow shuttle positions to allow repeated outputs at a
-specified time interval. (uinput repeat ??? )
 
 A GUI for setting keystroke bindings would be nice -> part of userspace app?
 

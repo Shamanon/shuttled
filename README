@@ -6,38 +6,38 @@ from a Contour Design ShuttlePRO v2.  It translates these events into
 keystrokes.  It was developed and tested on kubuntu 15.04.
 
 It is a stripped down version of ShuttlePRO designed to run as a daemon and translate
-shuttlepro events to basic keystrokes. I didn't see any use for adding mouse click translations
-so I removed them. 
+shuttlepro events to basic keystrokes. Will add mousey type translations later
 
-shuttled events can generate sequences of multiple keystrokes,
-including the pressing and releasing of modifier keys.  
+To build/install
 
-To install type ./install from this directory.
-
-You can also build manually:
-
-# apt-get install build-essential
+# apt-get install build-essential libconfig-dev
 
 $ make
+$ make install
 
-Install instructions:
+This will install:
+binary "shuttled" in /usr/local/bin  
+sytem service script shuttled.service in /lib/systemd/system
+shuttled conf file shuttled.conf in /etc
 
-# cp *.rules /etc/udev/rules.d
-# make install
+The udev .rule file will start/stop the daemon on plug/unplug.
 
-This will install the binary "shuttled" in /usr/local/bin.  
-The udev .rules file allows global read access to any
-ShuttlePRO v2 devices plugged into the system.  The script passes the
-name of the shuttle device to the binary, so you can configure it
-there if it is different on your system.
+If you update the config file, restart the deamon with 
+$ sudo service shuttled restart
+Or unplug/replug the device.
 
 Configuration instructions:
 
 Config file for assigning keystrokes to the buttons is in 
-/etc/default/shuttled
+/etc/shuttled. Currently it uses the uinput key codes (numbers)
+A list of common codes are in the config file. You can run
+
+$sudo evtest
+
+Will get you all sorts of usefull information.
 
 If you need configuration on a per user basis or per-window basis,
-use the ShuttlePRO application instead.
+use the ShuttlePRO application until I finish the userspace applet.
 
-See the example.shuttlerc file for information about the file.  You
+See the shuttled.conf file for information about the file.  You
 may also want to look at the comment at the top of readconfig.c.
